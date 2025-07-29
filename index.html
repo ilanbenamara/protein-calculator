@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Nutrition Tracker with Unit Conversion</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* Same styling as before */
+  body {
+    font-family: Arial, sans-serif;
+    margin: 30px auto;
+    max-width: 450px;
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background: #fefefe;
+  }
+  h2 {
+    text-align: center;
+  }
+  label {
+    margin-top: 10px;
+    display: block;
+    font-weight: bold;
+  }
+  input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    font-size: 16px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+  }
+  button {
+    background-color: #28a745;
+    color: white;
+    margin-top: 15px;
+    cursor: pointer;
+    border: none;
+  }
+  button:hover {
+    background-color: #218838;
+  }
+  #food-list {
+    margin-top: 20px;
+  }
+  #totals {
+    margin-top: 20px;
+    font-weight: bold;
+    background: #e8f5e9;
+    padding: 10px;
+    border-radius: 8px;
+  }
+  .food-entry {
+    border-bottom: 1px solid #ccc;
+    padding: 6px 0;
+  }
+</style>
+</head>
+<body>
+
+<h2>Nutrition Tracker</h2>
+
+<label for="food">Select Food:</label>
+<select id="food">
+  <option value="chicken_breast">Chicken Breast</option>
+  <option value="chicken_drum">Chicken Drumsticks</option>
+  <option value="steak">Steak (Beef)</option>
+  <option value="ground_beef">Ground Beef (80% lean)</option>
+  <option value="turkey_breast">Turkey Breast</option>
+  <option value="pork_loin">Pork Loin</option>
+  <option value="salmon">Salmon (Fish)</option>
+  <option value="tuna">Tuna (Fish)</option>
+  <option value="egg">Egg (whole)</option>
+  <option value="greek_yogurt">Greek Yogurt (plain, non-fat)</option>
+  <option value="cottage_cheese">Cottage Cheese</option>
+  <option value="tofu">Tofu (firm)</option>
+  <option value="lentils">Lentils (cooked)</option>
+  <option value="chickpeas">Chickpeas (cooked)</option>
+  <option value="quinoa">Quinoa (cooked)</option>
+  <option value="almonds">Almonds</option>
+  <option value="peanut_butter">Peanut Butter</option>
+  <option value="chia_seeds">Chia Seeds</option>
+</select>
+
+<label for="weight">Weight:</label>
+<input type="number" id="weight" placeholder="e.g. 100" />
+
+<label for="unit">Select Weight Unit:</label>
+<select id="unit">
+  <option value="g">Grams (g)</option>
+  <option value="oz">Ounces (oz)</option>
+</select>
+
+<label for="cooked">Is the food cooked?</label>
+<select id="cooked">
+  <option value="false">No (Raw/Not Applicable)</option>
+  <option value="true">Yes (Cooked)</option>
+</select>
+
+<button onclick="addFood()">Add Food</button>
+
+<div id="food-list"></div>
+
+<div id="totals">
+  Totals:<br />
+  Protein: <span id="total-protein">0</span> g<br />
+  Calories: <span id="total-calories">0</span> kcal<br />
+  Fat: <span id="total-fat">0</span> g<br />
+  Carbs: <span id="total-carbs">0</span> g
+</div>
+
+<script>
+  const nutritionData = {
+    chicken_breast: { raw: { protein: 23, calories: 120, fat: 1.9, carbs: 0 }, cooked: { protein: 31, calories: 165, fat: 3.6, carbs: 0 } },
+    chicken_drum: { raw: { protein: 18, calories: 150, fat: 8.1, carbs: 0 }, cooked: { protein: 27, calories: 210, fat: 11, carbs: 0 } },
+    steak: { raw: { protein: 20, calories: 150, fat: 6.5, carbs: 0 }, cooked: { protein: 26, calories: 210, fat: 9, carbs: 0 } },
+    ground_beef: { raw: { protein: 17, calories: 215, fat: 15, carbs: 0 }, cooked: { protein: 25, calories: 290, fat: 20, carbs: 0 } },
+    turkey_breast: { raw: { protein: 24, calories: 135, fat: 1, carbs: 0 }, cooked: { protein: 29, calories: 160, fat: 2, carbs: 0 } },
+    pork_loin: { raw: { protein: 21, calories: 140, fat: 3.5, carbs: 0 }, cooked: { protein: 27, calories: 190, fat: 5, carbs: 0 } },
+    salmon: { raw: { protein: 20, calories: 208, fat: 13, carbs: 0 }, cooked: { protein: 25, calories: 250, fat: 15, carbs: 0 } },
+    tuna: { raw: { protein: 23, calories: 130, fat: 1, carbs: 0 }, cooked: { protein: 30, calories: 160, fat: 3, carbs: 0 } },
+    egg: { raw: { protein: 13, calories: 143, fat: 10, carbs: 1 }, cooked: { protein: 13, calories: 155, fat: 11, carbs: 1 } },
+    greek_yogurt: { raw: { protein: 10, calories: 59, fat: 0, carbs: 3.6 }, cooked: { protein: 10, calories: 59, fat: 0, carbs: 3.6 } },
+    cottage_cheese: { raw: { protein: 11, calories: 98, fat: 4.3, carbs: 3.4 }, cooked: { protein: 11, calories: 98, fat: 4.3, carbs: 3.4 } },
+    tofu: { raw: { protein: 8, calories: 76, fat: 4.8, carbs: 1.9 }, cooked: { protein: 8, calories: 76, fat: 4.8, carbs: 1.9 } },
+    lentils: { raw: { protein: 26, calories: 352, fat: 1, carbs: 60 }, cooked: { protein: 9, calories: 116, fat: 0.4, carbs: 20 } },
+    chickpeas: { raw: { protein: 19, calories: 364, fat: 6, carbs: 61 }, cooked: { protein: 9, calories: 164, fat: 3, carbs: 27 } },
+    quinoa: { raw: { protein: 14, calories: 368, fat: 6, carbs: 64 }, cooked: { protein: 4, calories: 120, fat: 2, carbs: 21 } },
+    almonds: { raw: { protein: 21, calories: 579, fat: 50, carbs: 22 }, cooked: { protein: 21, calories: 579, fat: 50, carbs: 22 } },
+    peanut_butter: { raw: { protein: 25, calories: 588, fat: 50, carbs: 20 }, cooked: { protein: 25, calories: 588, fat: 50, carbs: 20 } },
+    chia_seeds: { raw: { protein: 17, calories: 486, fat: 31, carbs: 42 }, cooked: { protein: 17, calories: 486, fat: 31, carbs: 42 } },
+  };
+
+  const foodList = [];
+  let totals = { protein: 0, calories: 0, fat: 0, carbs: 0 };
+
+  function addFood() {
+    const food = document.getElementById("food").value;
+    const weightInput = parseFloat(document.getElementById("weight").value);
+    const unit = document.getElementById("unit").value;
+    const cooked = document.getElementById("cooked").value === "true";
+
+    if (isNaN(weightInput) || weightInput <= 0) {
+      alert("Please enter a valid weight.");
+      return;
+    }
+
+    // Convert ounces to grams if needed
+    const weight = unit === "oz" ? weightInput * 28.3495 : weightInput;
+
+    const nutrition = nutritionData[food];
+    if (!nutrition) {
+      alert("Nutrition data not found for selected food.");
+      return;
+    }
+
+    const nutriVals = cooked ? nutrition.cooked : nutrition.raw;
+
+    // Calculate nutrition for given weight
+    const protein = (nutriVals.protein * weight) / 100;
+    const calories = (nutriVals.calories * weight) / 100;
+    const fat = (nutriVals.fat * weight) / 100;
+    const carbs = (nutriVals.carbs * weight) / 100;
+
+    // Add to list
+    foodList.push({ food, weight, protein, calories, fat, carbs, unit, weightInput });
+
+    // Update totals
+    totals.protein += protein;
+    totals.calories += calories;
+    totals.fat += fat;
+    totals.carbs += carbs;
+
+    renderList();
+    renderTotals();
+
+    // Clear inputs
+    document.getElementById("weight").value = "";
+  }
+
+  function renderList() {
+    const container = document.getElementById("food-list");
+    container.innerHTML = "";
+
+    foodList.forEach((item, i) => {
+      const div = document.createElement("div");
+      div.className = "food-entry";
+      div.innerHTML = `
+        <strong>${capitalizeWords(item.food.replace(/_/g, " "))}</strong> — ${item.weightInput.toFixed(2)} ${item.unit} (${item.weight.toFixed(2)} g) | Protein: ${item.protein.toFixed(2)} g, Calories: ${item.calories.toFixed(0)} kcal, Fat: ${item.fat.toFixed(2)} g, Carbs: ${item.carbs.toFixed(2)} g
+        <button style="float:right" onclick="removeFood(${i})">Remove</button>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function renderTotals() {
+    document.getElementById("total-protein").innerText = totals.protein.toFixed(2);
+    document.getElementById("total-calories").innerText = totals.calories.toFixed(0);
+    document.getElementById("total-fat").innerText = totals.fat.toFixed(2);
+    document.getElementById("total-carbs").innerText = totals.carbs.toFixed(2);
+  }
+
+  function removeFood(index) {
+    const removed = foodList.splice(index, 1)[0];
+    totals.protein -= removed.protein;
+    totals.calories -= removed.calories;
+    totals.fat -= removed.fat;
+    totals.carbs -= removed.carbs;
+    renderList();
+    renderTotals();
+  }
+
+  function capitalizeWords(str) {
+    return str.replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+</script>
+
+</body>
+</html>
