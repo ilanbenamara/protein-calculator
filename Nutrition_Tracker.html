@@ -20,33 +20,40 @@
     font-size: 1.5rem;
     margin-bottom: 10px;
   }
-  label, input, button, select {
-    width: 100%;
-    box-sizing: border-box;
-    font-size: 1rem;
-    margin: 5px 0;
+  label {
+    display: block;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 5px;
+  }
+  input, select, button {
+    margin: 10px 0;
     padding: 10px;
+    font-size: 1rem;
     border-radius: 6px;
     border: 1px solid #ccc;
+    width: 100%;
+    box-sizing: border-box;
   }
   button {
     background-color: #007bff;
     color: white;
     border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
   }
   button:hover {
     background-color: #0056b3;
-    cursor: pointer;
   }
   table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 15px;
     font-size: 0.9rem;
   }
   th, td {
     border: 1px solid #ddd;
-    padding: 6px;
+    padding: 8px;
     text-align: center;
   }
   th {
@@ -55,7 +62,7 @@
   }
   .actions button {
     font-size: 0.8rem;
-    padding: 4px 8px;
+    padding: 5px 10px;
     margin: 0 2px;
   }
   canvas {
@@ -73,7 +80,7 @@
 <input type="date" id="log-date" />
 
 <label for="food-name">Food Name</label>
-<input list="food-list" id="food-name" placeholder="e.g. chicken breast" autocomplete="off" />
+<input list="food-list" id="food-name" placeholder="Type or select a food" autocomplete="off" />
 <datalist id="food-list"></datalist>
 
 <label for="grams">Quantity (grams)</label>
