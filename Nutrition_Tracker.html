@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Daily Nutrition Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+      border-collapse: collapse;
+      padding: 8px;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+    }
+    input {
+      margin: 5px;
+    }
+    button {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Daily Nutrition Tracker</h1>
+  <label>Food Name: <input type="text" id="foodName" placeholder="e.g. Chicken Breast"></label>
+  <label>Quantity (g): <input type="number" id="quantity"></label>
+  <button onclick="addFood()">Add Food</button>
+
+  <table id="logTable">
+    <thead>
+      <tr>
+        <th>Food</th>
+        <th>Quantity (g)</th>
+        <th>Calories</th>
+        <th>Protein (g)</th>
+        <th>Carbs (g)</th>
+        <th>Fats (g)</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2"><strong>Totals:</strong></td>
+        <td id="totalCal">0</td>
+        <td id="totalProtein">0</td>
+        <td id="totalCarbs">0</td>
+        <td id="totalFats">0</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <script>
+    const foodDatabase = {
+      "chicken breast": { calories: 165, protein: 31, carbs: 0, fats: 3.6 },
+      "steak": { calories: 271, protein: 25, carbs: 0, fats: 19 },
+      "ground beef": { calories: 250, protein: 26, carbs: 0, fats: 17 },
+      "chicken drumstick": { calories: 172, protein: 22, carbs: 0, fats: 9 },
+      "rice": { calories: 130, protein: 2.4, carbs: 28, fats: 0.2 },
+      "egg": { calories: 78, protein: 6.3, carbs: 0.6, fats: 5.3 },
+      "broccoli": { calories: 34, protein: 2.8, carbs: 6.6, fats: 0.4 },
+      "almonds": { calories: 579, protein: 21, carbs: 22, fats: 50 },
+    };
+
+    let log = [];
+
+    function addFood() {
+      const name = document.getElementById('foodName').value.trim().toLowerCase();
+      const qty = parseFloat(document.getElementById('quantity').value);
+      if (!foodDatabase[name]) {
+        alert("Food not found in database");
+        return;
+      }
+      const food = foodDatabase[name];
+      const entry = {
+        name,
+        qty,
+        calories: (food.calories * qty) / 100,
+        protein: (food.protein * qty) / 100,
+        carbs: (food.carbs * qty) / 100,
+        fats: (food.fats * qty) / 100
+      };
+      log.push(entry);
+      updateTable();
+      document.getElementById('foodName').value = "";
+      document.getElementById('quantity').value = "";
+    }
+
+    function updateTable() {
+      const tbody = document.querySelector('#logTable tbody');
+      tbody.innerHTML = "";
+      let totalCal = 0, totalProtein = 0, totalCarbs = 0, totalFats = 0;
+      log.forEach((item, index) => {
+        totalCal += item.calories;
+        totalProtein += item.protein;
+        totalCarbs += item.carbs;
+        totalFats += item.fats;
+        const row = `<tr>
+          <td>${item.name}</td>
+          <td>${item.qty}</td>
+          <td>${item.calories.toFixed(1)}</td>
+          <td>${item.protein.toFixed(1)}</td>
+          <td>${item.carbs.toFixed(1)}</td>
+          <td>${item.fats.toFixed(1)}</td>
+          <td><button onclick="removeItem(${index})">Delete</button></td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+      document.getElementById('totalCal').textContent = totalCal.toFixed(1);
+      document.getElementById('totalProtein').textContent = totalProtein.toFixed(1);
+      document.getElementById('totalCarbs').textContent = totalCarbs.toFixed(1);
+      document.getElementById('totalFats').textContent = totalFats.toFixed(1);
+    }
+
+    function removeItem(index) {
+      log.splice(index, 1);
+      updateTable();
+    }
+  </script>
+</body>
+</html>
