@@ -1,13 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Nutrition Tracker</title>
+  <meta charset="UTF-8" />
+  <title>Nutrition Tracker with Timestamp</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
+      max-width: 900px;
       margin: 20px auto;
       padding: 0 20px;
     }
@@ -22,6 +22,8 @@
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
+      text-align: center;
+      vertical-align: middle;
     }
     .totals {
       font-weight: bold;
@@ -31,13 +33,13 @@
 <body>
   <h2>Nutrition Tracker</h2>
 
-  <label for="date">Date:</label>
+  <label for="log-date">Select Date:</label>
   <input type="date" id="log-date" />
 
-  <br><br>
+  <br /><br />
 
-  <input type="text" id="food-name" placeholder="Food Name" list="food-list">
-  <input type="number" id="grams" placeholder="Grams" min="0">
+  <input type="text" id="food-name" placeholder="Food Name" list="food-list" autocomplete="off" />
+  <input type="number" id="grams" placeholder="Grams" min="0" />
   <button onclick="addEntry()">Add</button>
   <button onclick="exportLogs()">Export Logs</button>
 
@@ -46,7 +48,14 @@
   <table id="log-table">
     <thead>
       <tr>
-        <th>Food</th><th>Grams</th><th>Calories</th><th>Protein (g)</th><th>Carbs (g)</th><th>Fat (g)</th><th>Actions</th>
+        <th>Food</th>
+        <th>Grams</th>
+        <th>Calories</th>
+        <th>Protein (g)</th>
+        <th>Carbs (g)</th>
+        <th>Fat (g)</th>
+        <th>Timestamp</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -57,12 +66,12 @@
         <td id="total-protein">0</td>
         <td id="total-carbs">0</td>
         <td id="total-fat">0</td>
-        <td></td>
+        <td colspan="2"></td>
       </tr>
     </tfoot>
   </table>
 
-  <canvas id="nutritionChart" height="100"></canvas>
+  <canvas id="nutritionChart" height="120"></canvas>
 
   <script>
     const foodDB = {
@@ -102,10 +111,6 @@
     const dateInput = document.getElementById("log-date");
     let currentDate = new Date().toISOString().slice(0, 10);
     dateInput.value = currentDate;
-    dateInput.addEventListener('change', () => {
-      currentDate = dateInput.value;
-      renderLog();
-    });
 
     let chart;
     document.addEventListener("DOMContentLoaded", () => {
@@ -119,24 +124,37 @@
       renderChart();
     });
 
+    dateInput.addEventListener('change', () => {
+      currentDate = dateInput.value;
+      renderLog();
+    });
+
     function addEntry() {
-      const food = document.getElementById("food-name").value.toLowerCase();
+      const food = document.getElementById("food-name").value.toLowerCase().trim();
       const grams = parseFloat(document.getElementById("grams").value);
-      if (!foodDB[food] || isNaN(grams)) return alert("Invalid input");
+      if (!foodDB[food]) return alert("Food not found in database");
+      if (isNaN(grams) || grams <= 0) return alert("Enter a valid quantity");
 
       const ratio = grams / 100;
+      const timestamp = new Date().toISOString();
+
       const entry = {
         food,
         grams,
         calories: +(foodDB[food].cal * ratio).toFixed(2),
         protein: +(foodDB[food].protein * ratio).toFixed(2),
         carbs: +(foodDB[food].carbs * ratio).toFixed(2),
-        fat: +(foodDB[food].fat * ratio).toFixed(2)
+        fat: +(foodDB[food].fat * ratio).toFixed(2),
+        timestamp
       };
 
       const logs = getLogs();
       logs.push(entry);
       saveLogs(logs);
+
+      document.getElementById("food-name").value = "";
+      document.getElementById("grams").value = "";
+
       renderLog();
       renderChart();
     }
@@ -144,10 +162,17 @@
     function renderLog() {
       const logs = getLogs();
       logTable.innerHTML = "";
-      let tCal = 0, tP = 0, tC = 0, tF = 0;
+
+      let totalCal = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0;
 
       logs.forEach((entry, idx) => {
-        const row = logTable.insertRow();
+        totalCal += entry.calories;
+        totalProtein += entry.protein;
+        totalCarbs += entry.carbs;
+        totalFat += entry.fat;
+
+        const row = document.createElement("tr");
+        const timeStr = new Date(entry.timestamp).toLocaleString();
         row.innerHTML = `
           <td>${entry.food}</td>
           <td>${entry.grams}</td>
@@ -155,21 +180,19 @@
           <td>${entry.protein}</td>
           <td>${entry.carbs}</td>
           <td>${entry.fat}</td>
+          <td>${timeStr}</td>
           <td>
             <button onclick="editEntry(${idx})">Edit</button>
-            <button onclick="deleteEntry(${idx})">X</button>
+            <button onclick="deleteEntry(${idx})">Delete</button>
           </td>
         `;
-        tCal += entry.calories;
-        tP += entry.protein;
-        tC += entry.carbs;
-        tF += entry.fat;
+        logTable.appendChild(row);
       });
 
-      totals.cal.textContent = tCal.toFixed(2);
-      totals.protein.textContent = tP.toFixed(2);
-      totals.carbs.textContent = tC.toFixed(2);
-      totals.fat.textContent = tF.toFixed(2);
+      totals.cal.textContent = totalCal.toFixed(2);
+      totals.protein.textContent = totalProtein.toFixed(2);
+      totals.carbs.textContent = totalCarbs.toFixed(2);
+      totals.fat.textContent = totalFat.toFixed(2);
     }
 
     function editEntry(index) {
@@ -196,9 +219,9 @@
       return JSON.parse(localStorage.getItem(key)) || [];
     }
 
-    function saveLogs(data) {
+    function saveLogs(logs) {
       const key = "log-" + currentDate;
-      localStorage.setItem(key, JSON.stringify(data));
+      localStorage.setItem(key, JSON.stringify(logs));
     }
 
     function exportLogs() {
@@ -214,20 +237,26 @@
       a.href = url;
       a.download = "nutrition_logs.json";
       a.click();
+      URL.revokeObjectURL(url);
     }
 
     function renderChart() {
-      const labels = [], calories = [], proteins = [];
-      Object.keys(localStorage).filter(k => k.startsWith("log-")).sort().forEach(dateKey => {
-        const entries = JSON.parse(localStorage.getItem(dateKey));
-        labels.push(dateKey.replace("log-", ""));
-        calories.push(entries.reduce((sum, e) => sum + e.calories, 0));
-        proteins.push(entries.reduce((sum, e) => sum + e.protein, 0));
-      });
+      const labels = [];
+      const calories = [];
+      const proteins = [];
+      Object.keys(localStorage)
+        .filter(k => k.startsWith("log-"))
+        .sort()
+        .forEach(dateKey => {
+          const entries = JSON.parse(localStorage.getItem(dateKey));
+          labels.push(dateKey.replace("log-", ""));
+          calories.push(entries.reduce((sum, e) => sum + e.calories, 0));
+          proteins.push(entries.reduce((sum, e) => sum + e.protein, 0));
+        });
 
       const ctx = document.getElementById("nutritionChart").getContext("2d");
-      if (chart) chart.destroy();
-      chart = new Chart(ctx, {
+      if (window.chartInstance) window.chartInstance.destroy();
+      window.chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
           labels,
@@ -236,20 +265,38 @@
               label: "Calories",
               data: calories,
               borderColor: "red",
-              fill: false
+              fill: false,
+              tension: 0.1
             },
             {
               label: "Protein (g)",
               data: proteins,
               borderColor: "blue",
-              fill: false
+              fill: false,
+              tension: 0.1
             }
           ]
         },
         options: {
           responsive: true,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
           scales: {
-            y: { beginAtZero: true }
+            y: {
+              beginAtZero: true,
+              title: {
+                display: true,
+                text: 'Amount'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Date'
+              }
+            }
           }
         }
       });
