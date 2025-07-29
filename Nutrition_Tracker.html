@@ -23,11 +23,8 @@
   label {
     display: block;
     font-weight: bold;
-    margin-top: 5px;
+    margin-top: 15px;
     margin-bottom: 5px;
-  }
-  .section {
-    margin-bottom: 20px; /* space between sections */
   }
   input, select, button {
     margin: 10px 0;
@@ -68,16 +65,10 @@
     padding: 5px 10px;
     margin: 0 2px;
   }
-  .chart-container {
-    max-width: 480px;      /* same max width as body */
-    margin: 20px auto;     /* center horizontally, with vertical margin */
-    text-align: center;
-  }
-  #nutritionChart {
-    width: 100% !important;   /* fill container width */
-    height: 300px !important; /* increase height */
-    max-height: 300px;
-    display: inline-block;
+  canvas {
+    margin-top: 15px;
+    max-width: 100%;
+    height: auto !important;
   }
 </style>
 </head>
@@ -85,21 +76,15 @@
 
 <h1>Nutrition Tracker</h1>
 
-<div class="section">
-  <label for="log-date">Select Date</label>
-  <input type="date" id="log-date" />
-</div>
+<label for="log-date">Select Date</label>
+<input type="date" id="log-date" />
 
-<div class="section">
-  <label for="food-name">Food Name</label>
-  <input list="food-list" id="food-name" placeholder="Type or select a food" autocomplete="off" />
-  <datalist id="food-list"></datalist>
-</div>
+<label for="food-name">Food Name</label>
+<input list="food-list" id="food-name" placeholder="Type or select a food" autocomplete="off" />
+<datalist id="food-list"></datalist>
 
-<div class="section">
-  <label for="grams">Quantity (grams)</label>
-  <input type="number" id="grams" placeholder="100" min="1" />
-</div>
+<label for="grams">Quantity (grams)</label>
+<input type="number" id="grams" placeholder="100" min="1" />
 
 <button id="add-button">Add Food</button>
 <button id="export-button">Export Logs</button>
@@ -130,9 +115,7 @@
   </tfoot>
 </table>
 
-<div class="chart-container">
-  <canvas id="nutritionChart" aria-label="Calories and protein over time" role="img"></canvas>
-</div>
+<canvas id="nutritionChart" aria-label="Calories and protein over time" role="img"></canvas>
 
 <script>
   const foodDB = {
@@ -178,6 +161,7 @@
   let currentDate = new Date().toISOString().slice(0,10);
   dateInput.value = currentDate;
 
+  // Populate food datalist
   function populateFoodList() {
     const datalist = document.getElementById("food-list");
     datalist.innerHTML = "";
@@ -188,16 +172,19 @@
     });
   }
 
+  // Load logs for currentDate
   function getLogs() {
     const key = "log-" + currentDate;
     return JSON.parse(localStorage.getItem(key)) || [];
   }
 
+  // Save logs for currentDate
   function saveLogs(logs) {
     const key = "log-" + currentDate;
     localStorage.setItem(key, JSON.stringify(logs));
   }
 
+  // Render log table and totals
   function renderLog() {
     const logs = getLogs();
     logTableBody.innerHTML = "";
@@ -233,6 +220,7 @@
     totalsEls.fat.textContent = totalFat.toFixed(1);
   }
 
+  // Add entry
   function addEntry() {
     const food = foodNameInput.value.toLowerCase().trim();
     const grams = parseFloat(gramsInput.value);
@@ -263,6 +251,7 @@
     gramsInput.value = "";
   }
 
+  // Edit entry
   function editEntry(index) {
     const logs = getLogs();
     const entry = logs[index];
@@ -274,6 +263,7 @@
     renderChart();
   }
 
+  // Delete entry
   function deleteEntry(index) {
     const logs = getLogs();
     logs.splice(index, 1);
@@ -282,6 +272,7 @@
     renderChart();
   }
 
+  // Export logs as JSON file
   function exportLogs() {
     const logs = {};
     Object.keys(localStorage).forEach(key => {
@@ -298,6 +289,7 @@
     URL.revokeObjectURL(url);
   }
 
+  // Render Chart.js line chart with Calories and Protein over days
   function renderChart() {
     const keys = Object.keys(localStorage).filter(k => k.startsWith("log-")).sort();
     const labels = [];
@@ -344,10 +336,12 @@
     });
   }
 
+  // Initialize
   populateFoodList();
   renderLog();
   renderChart();
 
+  // Event listeners
   dateInput.addEventListener("change", () => {
     currentDate = dateInput.value;
     renderLog();
@@ -356,6 +350,7 @@
   addBtn.addEventListener("click", addEntry);
   exportBtn.addEventListener("click", exportLogs);
 
+  // Make edit/delete functions global so inline onclick works
   window.editEntry = editEntry;
   window.deleteEntry = deleteEntry;
 </script>
