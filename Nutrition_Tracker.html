@@ -1,45 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Nutrition Tracker</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f4f4f4;
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
     }
     h2 {
       margin-top: 30px;
     }
-    .section {
-      margin-bottom: 25px;
-      padding: 15px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
     label, input, select, button {
-      display: block;
       margin: 5px 0;
+      display: block;
+      width: 100%;
     }
     table {
       width: 100%;
-      margin-top: 10px;
       border-collapse: collapse;
+      margin-top: 15px;
     }
     th, td {
-      padding: 8px;
       border: 1px solid #ccc;
+      padding: 6px;
+      text-align: center;
     }
     canvas {
-      display: block;
-      margin: 40px auto;
-      max-width: 600px;
+      max-width: 100%;
+      margin-top: 30px;
     }
-    .center {
-      text-align: center;
+    .spacer {
+      margin-top: 25px;
+      margin-bottom: 15px;
+      border-top: 1px solid #ccc;
     }
   </style>
 </head>
@@ -47,195 +44,185 @@
 
   <h1>Nutrition Tracker</h1>
 
-  <div class="section">
-    <label>Date: <input type="date" id="logDate" /></label>
+  <label>Date:</label>
+  <input type="date" id="date" value="" />
 
-    <label>Food:
-      <input type="text" id="foodName" placeholder="Enter food name" list="foodList">
-      <datalist id="foodList">
-        <option value="Chicken Breast">
-        <option value="Steak">
-        <option value="Ground Beef">
-        <option value="Chicken Drumsticks">
-        <option value="Salmon">
-        <option value="Tofu">
-        <option value="Eggs">
-        <option value="Protein Shake">
-      </datalist>
-    </label>
+  <div class="spacer"></div>
 
-    <label>Calories: <input type="number" id="calories" /></label>
-    <label>Protein (g): <input type="number" id="protein" /></label>
-    <label>Fat (g): <input type="number" id="fat" /></label>
-    <label>Carbs (g): <input type="number" id="carbs" /></label>
-    <button onclick="addEntry()">Add Entry</button>
-  </div>
+  <label>Food Name:</label>
+  <select id="foodList">
+    <option value="">-- Select common food --</option>
+    <option value="Chicken Breast">Chicken Breast</option>
+    <option value="Steak">Steak</option>
+    <option value="Ground Beef">Ground Beef</option>
+    <option value="Chicken Drumsticks">Chicken Drumsticks</option>
+    <option value="Apple">Apple</option>
+    <option value="Egg">Egg</option>
+    <option value="Banana">Banana</option>
+    <option value="Salmon">Salmon</option>
+    <option value="Avocado">Avocado</option>
+    <option value="Rice">Rice</option>
+    <option value="Sweet Potato">Sweet Potato</option>
+    <option value="Protein Shake">Protein Shake</option>
+    <option value="Daily Target">Daily Target</option>
+  </select>
 
-  <div class="section">
-    <h2>Logged Entries</h2>
-    <table id="logTable">
-      <thead>
-        <tr>
-          <th>Date</th><th>Food</th><th>Calories</th><th>Protein</th><th>Fat</th><th>Carbs</th><th>Actions</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  <input type="text" id="customFood" placeholder="Or type your own food name" />
 
-  <div class="section center">
-    <h2>Calories & Protein Over Time</h2>
-    <canvas id="logChart"></canvas>
-  </div>
+  <label>Calories:</label>
+  <input type="number" id="calories" />
+
+  <label>Protein (g):</label>
+  <input type="number" id="protein" />
+
+  <label>Fat (g):</label>
+  <input type="number" id="fat" />
+
+  <label>Carbs (g):</label>
+  <input type="number" id="carbs" />
+
+  <button onclick="addEntry()">Add Entry</button>
+  <button onclick="exportLogs()">Export Logs</button>
+  <button onclick="clearLogs()">Clear All</button>
+
+  <div class="spacer"></div>
+
+  <h2>Log</h2>
+  <table id="logTable">
+    <thead>
+      <tr>
+        <th>Date</th><th>Food</th><th>Calories</th><th>Protein</th><th>Fat</th><th>Carbs</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="spacer"></div>
+
+  <h2>Graph</h2>
+  <canvas id="caloriesChart"></canvas>
 
   <script>
-    let logs = JSON.parse(localStorage.getItem('nutritionLogs')) || [];
+    let logs = JSON.parse(localStorage.getItem("nutritionLogs")) || [];
 
-    const BMR = 1506;
-    const TDEE = 2334;
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("date").valueAsDate = new Date();
+      updateTable();
+      updateChart();
+    });
 
     function addEntry() {
-      const date = document.getElementById("logDate").value;
-      const food = document.getElementById("foodName").value.trim();
-      const calories = parseFloat(document.getElementById("calories").value);
-      const protein = parseFloat(document.getElementById("protein").value);
-      const fat = parseFloat(document.getElementById("fat").value);
-      const carbs = parseFloat(document.getElementById("carbs").value);
+      const date = document.getElementById("date").value;
+      const food = document.getElementById("customFood").value || document.getElementById("foodList").value;
+      const calories = parseInt(document.getElementById("calories").value || 0);
+      const protein = parseInt(document.getElementById("protein").value || 0);
+      const fat = parseInt(document.getElementById("fat").value || 0);
+      const carbs = parseInt(document.getElementById("carbs").value || 0);
 
-      if (!date || !food || isNaN(calories)) return alert("Please enter all fields!");
+      if (!date || !food) {
+        alert("Please enter date and food name.");
+        return;
+      }
 
       logs.push({ date, food, calories, protein, fat, carbs });
-      saveLogs();
-      displayLogs();
-      drawChart();
+      localStorage.setItem("nutritionLogs", JSON.stringify(logs));
+      updateTable();
+      updateChart();
+
+      document.getElementById("customFood").value = "";
+      document.getElementById("calories").value = "";
+      document.getElementById("protein").value = "";
+      document.getElementById("fat").value = "";
+      document.getElementById("carbs").value = "";
+    }
+
+    function updateTable() {
+      const tbody = document.querySelector("#logTable tbody");
+      tbody.innerHTML = "";
+      logs.forEach((entry, index) => {
+        const row = `<tr>
+          <td>${entry.date}</td>
+          <td>${entry.food}</td>
+          <td>${entry.calories}</td>
+          <td>${entry.protein}</td>
+          <td>${entry.fat}</td>
+          <td>${entry.carbs}</td>
+          <td><button onclick="deleteEntry(${index})">Delete</button></td>
+        </tr>`;
+        tbody.insertAdjacentHTML("beforeend", row);
+      });
     }
 
     function deleteEntry(index) {
       logs.splice(index, 1);
-      saveLogs();
-      displayLogs();
-      drawChart();
-    }
-
-    function editEntry(index) {
-      const entry = logs[index];
-      document.getElementById("logDate").value = entry.date;
-      document.getElementById("foodName").value = entry.food;
-      document.getElementById("calories").value = entry.calories;
-      document.getElementById("protein").value = entry.protein;
-      document.getElementById("fat").value = entry.fat;
-      document.getElementById("carbs").value = entry.carbs;
-      deleteEntry(index);
-    }
-
-    function saveLogs() {
       localStorage.setItem("nutritionLogs", JSON.stringify(logs));
+      updateTable();
+      updateChart();
     }
 
-    function displayLogs() {
-      const tbody = document.querySelector("#logTable tbody");
-      tbody.innerHTML = "";
-      logs.forEach((log, i) => {
-        const row = tbody.insertRow();
-        row.innerHTML = `
-          <td>${log.date}</td>
-          <td>${log.food}</td>
-          <td>${log.calories}</td>
-          <td>${log.protein}</td>
-          <td>${log.fat}</td>
-          <td>${log.carbs}</td>
-          <td>
-            <button onclick="editEntry(${i})">Edit</button>
-            <button onclick="deleteEntry(${i})">Delete</button>
-          </td>
-        `;
-      });
+    function exportLogs() {
+      const csv = logs.map(entry =>
+        `${entry.date},${entry.food},${entry.calories},${entry.protein},${entry.fat},${entry.carbs}`
+      );
+      csv.unshift("Date,Food,Calories,Protein,Fat,Carbs");
+      const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "nutrition_log.csv";
+      link.click();
     }
 
-    function drawChart() {
-      const ctx = document.getElementById('logChart').getContext('2d');
-      const byDate = {};
+    function clearLogs() {
+      if (confirm("Clear all logs?")) {
+        logs = [];
+        localStorage.removeItem("nutritionLogs");
+        updateTable();
+        updateChart();
+      }
+    }
 
-      logs.forEach(log => {
-        if (!byDate[log.date]) {
-          byDate[log.date] = { calories: 0, protein: 0 };
-        }
-        byDate[log.date].calories += log.calories;
-        byDate[log.date].protein += log.protein;
+    function updateChart() {
+      const dailyTotals = {};
+      logs.forEach(({ date, calories, protein }) => {
+        if (!dailyTotals[date]) dailyTotals[date] = { calories: 0, protein: 0 };
+        dailyTotals[date].calories += calories;
+        dailyTotals[date].protein += protein;
       });
 
-      const dates = Object.keys(byDate).sort();
-      const caloriesData = dates.map(d => byDate[d].calories);
-      const proteinData = dates.map(d => byDate[d].protein);
+      const dates = Object.keys(dailyTotals).sort();
+      const caloriesData = dates.map(d => dailyTotals[d].calories);
+      const proteinData = dates.map(d => dailyTotals[d].protein);
 
-      if (window.chartInstance) window.chartInstance.destroy();
-
-      window.chartInstance = new Chart(ctx, {
-        type: 'line',
+      if (window.chart) window.chart.destroy();
+      const ctx = document.getElementById("caloriesChart").getContext("2d");
+      window.chart = new Chart(ctx, {
+        type: "line",
         data: {
           labels: dates,
           datasets: [
             {
-              label: 'Calories',
+              label: "Calories",
               data: caloriesData,
-              borderColor: 'rgba(255,99,132,1)',
+              borderColor: "red",
               fill: false
             },
             {
-              label: 'Protein (g)',
+              label: "Protein (g)",
               data: proteinData,
-              borderColor: 'rgba(54,162,235,1)',
-              fill: false
-            },
-            {
-              label: 'TDEE (2334)',
-              data: new Array(dates.length).fill(TDEE),
-              borderColor: 'rgba(0,200,0,0.4)',
-              borderDash: [5,5],
-              label: 'TDEE',
-              fill: false
-            },
-            {
-              label: 'BMR (1506)',
-              data: new Array(dates.length).fill(BMR),
-              borderColor: 'rgba(200,0,0,0.4)',
-              borderDash: [5,5],
+              borderColor: "blue",
               fill: false
             }
           ]
         },
         options: {
           responsive: true,
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          },
           plugins: {
-            legend: {
-              display: true,
-              position: 'top'
-            }
+            legend: { position: "top" },
+            title: { display: true, text: "Calories and Protein Over Time" }
           }
         }
       });
     }
-
-    // Add your baseline entry
-    if (!logs.some(l => l.food === 'Daily Target')) {
-      logs.push({
-        date: new Date().toISOString().slice(0, 10),
-        food: 'Daily Target',
-        calories: 1867,
-        protein: 120,
-        fat: 77,
-        carbs: 173
-      });
-      saveLogs();
-    }
-
-    displayLogs();
-    drawChart();
   </script>
 </body>
 </html>
